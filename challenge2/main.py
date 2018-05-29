@@ -53,12 +53,16 @@ def trainingRegression():
 	regr = linear_model.LinearRegression()
 	# Train the model using the training sets
 	regr.fit(np.transpose(np.matrix(x_axis)), np.transpose(np.matrix(y_axis)))
+	
+	# Make predictions using the testing set
+	y_pred = regr.predict(np.transpose(np.matrix(x_axis)))
 
 	coefficient_determination = regr.score(np.transpose(np.matrix(x_axis)), np.transpose(np.matrix(y_axis)))
 	b_coefficient = regr.coef_[0][0]
 	a_coefficient = regr.intercept_[0]
+	variance = r2_score(y_axis, y_pred)
 	
-	return b_coefficient, a_coefficient
+	return b_coefficient, a_coefficient, variance
 
 def calcMat(studs):
 	students = []
@@ -87,9 +91,9 @@ def makeHTTPPost(studs):
 	r = requests.post(url, data=data_to_send)
 	print(r.text)
 
-def calcHit(studs, a, b):
+def calcHit(studs, a, b, variance):
 	for st in studs:
-		st['NU_NOTA_MT'] = (b * st['MEDIA_S_MT']) + a
+		st['NU_NOTA_MT'] = (b * st['MEDIA_S_MT']) + a - variance
 
 	return studs
 
@@ -114,19 +118,19 @@ def main():
 	students = getInterests(file=file)
 	
 	print("Getting the coefficients for our linear regression:")
-	b,a = trainingRegression()
+	b,a,variance = trainingRegression()
 
 	print("Getting grades of the students who did the test:")
-	students = calcHit(studs=students,a=a,b=b)
+	students = calcHit(studs=students,a=a,b=b,variance=variance)
 
 	print("Calc math grade for people who miss the test:")
 	students = calcMiss(studs=students)
 
 	print("Formatting answer:")
-	students = getAnswer(students)
+	students = getAnswer(studs=students)
 
 	print("Making HTTP post:")
-	makeHTTPPost(students)
+	makeHTTPPost(studs=students)
 
 if __name__ == '__main__':
 	main()
