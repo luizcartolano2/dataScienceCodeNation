@@ -19,9 +19,8 @@ def getInterests(file):
 	for index in file.index:
 		student = {}
 		student['NU_INSCRICAO'] = file['NU_INSCRICAO'][index]
-		student['NU_NOTA_CN'] = file['NU_NOTA_CN'][index]
-		student['NU_NOTA_CH'] = file['NU_NOTA_CH'][index]
-		student['NU_NOTA_LC'] = file['NU_NOTA_LC'][index]
+		# student['MEDIA_S_MT']	= (3*file['NU_NOTA_REDACAO'][index] + 1.5*file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + 2*file["NU_NOTA_CN"][index])/(7.5)
+		student['MEDIA_S_MT']	= (file['NU_NOTA_REDACAO'][index] + file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/4
 		student['NU_NOTA_MT'] = None
 		student['TP_PRESENCA_LC'] = file['TP_PRESENCA_LC'][index]
 		students.append(student)
@@ -35,62 +34,17 @@ def trainingRegression():
 	students = []
 	for index in file.index:
 		student = {}
-		student['NU_NOTA_CN'] = file['NU_NOTA_CN'][index]
-		student['NU_NOTA_CH'] = file['NU_NOTA_CH'][index]
-		student['NU_NOTA_LC'] = file['NU_NOTA_LC'][index]
-		student['NU_NOTA_MT'] = file['NU_NOTA_MT'][index]
-		
-		if file['TX_RESPOSTAS_CN'][index] != 0:
-			cn_choices = list(file['TX_RESPOSTAS_CN'][index])
-			cn_gab = list(file['TX_GABARITO_CN'][index])
-			student['QUESTOES_CN'] = findRightAnswers(cn_choices, cn_gab)
-		else:
-			student['QUESTOES_CN'] = 0
-		
-		if file['TX_RESPOSTAS_CH'][index] != 0:
-			ch_choices = list(file['TX_RESPOSTAS_CH'][index])
-			ch_gab = list(file['TX_GABARITO_CH'][index])
-			student['QUESTOES_CH'] = findRightAnswers(ch_choices, ch_gab)
-		else:
-			student['QUESTOES_CH'] = 0
-		
-		if file['TX_RESPOSTAS_LC'][index] != 0:
-			lc_choices = list(file['TX_RESPOSTAS_LC'][index])
-			lc_gab = list(file['TX_GABARITO_LC'][index])
-			student['QUESTOES_LC'] = findRightAnswers(lc_choices, lc_gab)
-		else:
-			student['QUESTOES_LC'] = 0
-		
-		if file['TX_RESPOSTAS_MT'][index] != 0:
-			mt_choices = list(file['TX_RESPOSTAS_MT'][index])
-			mt_gab = list(file['TX_GABARITO_MT'][index])
-			student['QUESTOES_MT'] = findRightAnswers(mt_choices, mt_gab)
-		else:
-			student['QUESTOES_MT'] = 0
-		
+		student['NOTA_MT'] = file['NU_NOTA_MT'][index]
+		student['MEDIA_S_MT']	= (3*file['NU_NOTA_REDACAO'][index] + 1.5*file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + 2*file["NU_NOTA_CN"][index])/(7.5)
 		students.append(student)
 
 	x_axis, y_axis = [],[]
 	for st in students:
-		x_axis.append(st['QUESTOES_CN'])
-		x_axis.append(st['QUESTOES_CH'])
-		x_axis.append(st['QUESTOES_LC'])
-		x_axis.append(st['QUESTOES_MT'])
-		y_axis.append(st['NU_NOTA_CN'])
-		y_axis.append(st['NU_NOTA_CH'])
-		y_axis.append(st['NU_NOTA_LC'])
-		y_axis.append(st['NU_NOTA_MT'])
-
+		x_axis.append(st['MEDIA_S_MT'])
+		y_axis.append(st['NOTA_MT'])
+		
 	del students[:]
 	
-	# plt.scatter(x_axis,y_axis)
-	# plt.show()
-
-	# X = np.array([])
-	# for x in x_axis:
-	# 	X = np.append(X, x)
-
-	# X = X.reshape(1,-1)
 	
 	# Create linear regression object
 	regr = linear_model.LinearRegression()
@@ -98,8 +52,11 @@ def trainingRegression():
 	regr.fit(np.transpose(np.matrix(x_axis)), np.transpose(np.matrix(y_axis)))
 
 	coefficient_determination = regr.score(np.transpose(np.matrix(x_axis)), np.transpose(np.matrix(y_axis)))
+	b_coefficient = regr.coef_[0][0]
+	a_coefficient = regr.intercept_[0]
 	
-
+	return b_coefficient, a_coefficient
+	
 def findRightAnswers(choices, gab):
 	size = len(choices)
 	count = 0
@@ -137,6 +94,13 @@ def makeHTTPPost(studs):
 	r = requests.post(url, data=data_to_send)
 	print(r.text)
 
+def calcHit(studs, a, b):
+	for st in studs:
+		if st['NU_NOTA_MT'] == None:
+			st['NU_NOTA_MT'] = b * st['MEDIA_S_MT'] + a
+
+	return studs
+
 def getAnswer(studs):
 	students = []
 	for st in studs:
@@ -151,21 +115,26 @@ def getAnswer(studs):
 def main():
 	filename = "/Users/luizeduardocartolano/Dropbox/DUDU/python-test/dataScience/challenge2/test2.csv"
 	
-	# print("Reading file:")
-	# file = readCSV(filename)
+	print("Reading file:")
+	file = readCSV(filename)
 	
-	# print("Get Interests:")
-	# students = getInterests(file)
+	print("Get Interests:")
+	students = getInterests(file)
 	
-	# print("Calc math grade for people who miss the test:")
-	# students = calcMiss(students)
+	print("Calc math grade for people who miss the test:")
+	students = calcMiss(students)
 	
-	trainingRegression()
+	print("Getting the coefficients for our linear regression:")
+	b,a = trainingRegression()
 
-	# students = getAnswer(students)
+	print("Getting grades of the students who did the test:")
+	students = calcHit(studs=students,a=a,b=b)
 
-	# print("Making HTTP post:")
-	# makeHTTPPost(students)
+	print("Formatting answer:")
+	students = getAnswer(students)
+
+	print("Making HTTP post:")
+	makeHTTPPost(students)
 
 if __name__ == '__main__':
 	main()
