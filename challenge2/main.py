@@ -20,7 +20,8 @@ def getInterests(file):
 		student = {}
 		student['NU_INSCRICAO'] = file['NU_INSCRICAO'][index]
 		# student['MEDIA_S_MT']	= (3*file['NU_NOTA_REDACAO'][index] + 1.5*file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + 2*file["NU_NOTA_CN"][index])/(7.5)
-		student['MEDIA_S_MT']	= (file['NU_NOTA_REDACAO'][index] + file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/4
+		# student['MEDIA_S_MT']	= (file['NU_NOTA_REDACAO'][index] + file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/4
+		student['MEDIA_S_MT']	= (file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/3
 		student['NU_NOTA_MT'] = None
 		student['TP_PRESENCA_LC'] = file['TP_PRESENCA_LC'][index]
 		students.append(student)
@@ -35,7 +36,9 @@ def trainingRegression():
 	for index in file.index:
 		student = {}
 		student['NOTA_MT'] = file['NU_NOTA_MT'][index]
-		student['MEDIA_S_MT']	= (3*file['NU_NOTA_REDACAO'][index] + 1.5*file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + 2*file["NU_NOTA_CN"][index])/(7.5)
+		# student['MEDIA_S_MT']	= (3*file['NU_NOTA_REDACAO'][index] + 1.5*file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + 2*file["NU_NOTA_CN"][index])/(7.5)
+		# student['MEDIA_S_MT']	= (file['NU_NOTA_REDACAO'][index] + file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/4
+		student['MEDIA_S_MT']	= (file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/3
 		students.append(student)
 
 	x_axis, y_axis = [],[]
@@ -56,16 +59,6 @@ def trainingRegression():
 	a_coefficient = regr.intercept_[0]
 	
 	return b_coefficient, a_coefficient
-	
-def findRightAnswers(choices, gab):
-	size = len(choices)
-	count = 0
-
-	for i in range(size):
-		if choices[i] == gab[i]:
-			count = count + 1
-
-	return count
 
 def calcMat(studs):
 	students = []
@@ -96,8 +89,7 @@ def makeHTTPPost(studs):
 
 def calcHit(studs, a, b):
 	for st in studs:
-		if st['NU_NOTA_MT'] == None:
-			st['NU_NOTA_MT'] = b * st['MEDIA_S_MT'] + a
+		st['NU_NOTA_MT'] = (b * st['MEDIA_S_MT']) + a
 
 	return studs
 
@@ -116,19 +108,19 @@ def main():
 	filename = "/Users/luizeduardocartolano/Dropbox/DUDU/python-test/dataScience/challenge2/test2.csv"
 	
 	print("Reading file:")
-	file = readCSV(filename)
+	file = readCSV(filename=filename)
 	
 	print("Get Interests:")
-	students = getInterests(file)
-	
-	print("Calc math grade for people who miss the test:")
-	students = calcMiss(students)
+	students = getInterests(file=file)
 	
 	print("Getting the coefficients for our linear regression:")
 	b,a = trainingRegression()
 
 	print("Getting grades of the students who did the test:")
 	students = calcHit(studs=students,a=a,b=b)
+
+	print("Calc math grade for people who miss the test:")
+	students = calcMiss(studs=students)
 
 	print("Formatting answer:")
 	students = getAnswer(students)
