@@ -93,7 +93,7 @@ def makeHTTPPost(studs):
 
 def calcHit(studs, a, b, variance):
 	for st in studs:
-		st['NU_NOTA_MT'] = (b * st['MEDIA_S_MT']) + a - variance
+		st['NU_NOTA_MT'] = (b * st['MEDIA_S_MT']) + a + variance
 
 	return studs
 
