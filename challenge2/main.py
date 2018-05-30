@@ -19,8 +19,6 @@ def getInterests(file):
 	for index in file.index:
 		student = {}
 		student['NU_INSCRICAO'] = file['NU_INSCRICAO'][index]
-		# student['MEDIA_S_MT']	= (3*file['NU_NOTA_REDACAO'][index] + 1.5*file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + 2*file["NU_NOTA_CN"][index])/(7.5)
-		# student['MEDIA_S_MT']	= (file['NU_NOTA_REDACAO'][index] + file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/4
 		student['MEDIA_S_MT']	= (file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/3
 		student['NU_NOTA_MT'] = None
 		student['TP_PRESENCA_LC'] = file['TP_PRESENCA_LC'][index]
@@ -36,8 +34,6 @@ def trainingRegression():
 	for index in file.index:
 		student = {}
 		student['NOTA_MT'] = file['NU_NOTA_MT'][index]
-		# student['MEDIA_S_MT']	= (3*file['NU_NOTA_REDACAO'][index] + 1.5*file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + 2*file["NU_NOTA_CN"][index])/(7.5)
-		# student['MEDIA_S_MT']	= (file['NU_NOTA_REDACAO'][index] + file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/4
 		student['MEDIA_S_MT']	= (file["NU_NOTA_LC"][index] + file["NU_NOTA_CH"][index] + file["NU_NOTA_CN"][index])/3
 		students.append(student)
 
@@ -63,12 +59,6 @@ def trainingRegression():
 	variance = r2_score(y_axis, y_pred)
 	
 	return b_coefficient, a_coefficient, variance
-
-def calcMat(studs):
-	students = []
-
-	del studs[:]
-	return students	
 
 def calcMiss(studs):
 	# people who miss the LC test also miss the MT test
